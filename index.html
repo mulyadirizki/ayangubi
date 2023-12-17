@@ -11,13 +11,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
-<link href="/febry/style.css" rel="stylesheet" type="text/css" />
+<link href="./style.css" rel="stylesheet" type="text/css" />
 <script src="https://unpkg.com/typeit@8.7.0/dist/index.umd.js"></script>
 <script src="https://kit.fontawesome.com/4f3ce16e3e.js" crossorigin="anonymous"></script>
 
 <head>
-  <title>Script HTML buat Kamu</title>
-  <link rel="icon" type="image/x-icon" href="https://www.himang.my.id/favicon.ico">
+  <title>Ultah Ayang Ubi</title>
+  <!-- <link rel="icon" type="image/x-icon" href="https://www.himang.my.id/favicon.ico"> -->
   <meta name="description" content="Happy Birthday Friend">
   <!-- 
   Made with love by Rayys!
@@ -30,38 +30,221 @@
 </head>
 
 <body>
+    <script>
+      var rnd = Math.random, flr = Math.floor;
+      let canvas = document.createElement('canvas');
+     
+       document.getElementsByTagName('body')[0].appendChild(canvas);
+       canvas.style.position = 'absolute';
+       canvas.style.width = '98%';
+       canvas.style.height = '95%';
+       canvas.style.marginLeft = "-28px";
+       
+       canvas.width = canvas.clientWidth;
+       canvas.height = canvas.clientHeight;
+       
+       let ctx = canvas.getContext('2d');
+       
+       function rndNum(num) {
+       return rnd() * num + 1;
+       }
+       
+       function vector(x, y) {
+       this.x = x;
+       this.y = y;
+       
+       this.add = function(vec2) {
+       this.x = this.x + vec2.x;
+       this.y = this.y + vec2.y;
+       }
+       }
+       
+       function particle(pos, vel) {
+       this.pos = new vector(pos.x, pos.y);
+       this.vel = vel;
+       this.finish = false;
+       this.start = 0;
+       
+       this.update = function(time) {
+       let timeSpan = time - this.start;
+       
+       if (timeSpan > 500) {
+       this.finish = true;
+       }
+       
+       if (!this.finish) {
+       this.pos.add(this.vel);
+       this.vel.y = this.vel.y + gravity;
+       }
+       };
+       
+       this.draw = function() {
+       if (!this.finish) {
+       drawDot(this.pos.x, this.pos.y, 1);
+       }
+       }
+       
+       }
+       
+       function firework(x, y) {
+       this.pos = new vector(x, y);
+       this.vel = new vector(0, -rndNum(10) - 3);
+       this.color = 'hsl(' + rndNum(360) + ', 100%, 50%)'
+       this.size = 4;
+       this.finish = false;
+       this.start = 0;
+       let exParticles = [], exPLen = 100;
+       
+       let rootShow = true;
+       
+       this.update = function(time) {
+       if (this.finish) {
+       return;
+       }
+       
+       rootShow = this.vel.y < 0;
+       
+       if (rootShow) {
+       this.pos.add(this.vel);
+       this.vel.y = this.vel.y + gravity;
+       } else {
+       if (exParticles.length === 0) {
+       flash = true;
+       for (let i = 0; i < exPLen; i++) {
+       exParticles.push(new particle(this.pos, new vector(-rndNum(10) + 5, -rndNum(10) + 5)));
+       exParticles[exParticles.length - 1].start = time;
+       }
+       }
+       let countFinish = 0;
+       for (let i = 0; i < exPLen; i++) {
+       let p = exParticles[i];
+       p.update(time);
+       if (p.finish) {
+       countFinish++;
+       }
+       }
+       
+       if (countFinish === exPLen) {
+       this.finish = true;
+       }
+       
+       }
+       }
+       
+       this.draw = function() {
+       if (this.finish) {
+       return;
+       }
+       
+       ctx.fillStyle = this.color;
+       if (rootShow) {
+       drawDot(this.pos.x, this.pos.y, this.size);
+       } else {
+       for (let i = 0; i < exPLen; i++) {
+       let p = exParticles[i];
+       p.draw();
+       }
+       }
+       }
+       
+       }
+       
+       function drawDot(x, y, size) {
+       ctx.beginPath();
+       
+       ctx.arc(x, y, size, 0, Math.PI * 2);
+       ctx.fill();
+       
+       ctx.closePath();
+       }
+       
+       var fireworks = [],
+       gravity = 0.2,
+       snapTime = 0,
+       flash = false;
+       
+       function init() {
+       let numOfFireworks = 20;
+       for (let i = 0; i < numOfFireworks; i++) {
+       fireworks.push(new firework(rndNum(canvas.width), canvas.height));
+       }
+       }
+       
+       function update(time) {
+       for (let i = 0, len = fireworks.length; i < len; i++) {
+       let p = fireworks[i];
+       p.update(time);
+       }
+       }
+       
+       function draw(time) {
+       update(time);
+       
+       ctx.fillStyle = 'rgba(0,0,0,0.3)';
+       if (flash) {
+       flash = false;
+       }
+       ctx.fillRect(0, 0, canvas.width, canvas.height);
+       
+       ctx.fillStyle = 'white';
+       ctx.font = "30px Segoe UI";
+       let newTime = time - snapTime;
+       snapTime = time;
+       
+       ctx.fillStyle = 'blue';
+       for (let i = 0, len = fireworks.length; i < len; i++) {
+       let p = fireworks[i];
+       if (p.finish) {
+       fireworks[i] = new firework(rndNum(canvas.width), canvas.height);
+       p = fireworks[i];
+       p.start = time;
+       }
+       p.draw();
+       }
+       
+       window.requestAnimationFrame(draw);
+       }
+       
+       window.addEventListener('resize', function() {
+       canvas.width = canvas.clientWidth;
+       canvas.height = canvas.clientHeight;
+       });
+       
+       init();
+       draw();
+    </script>
 
   <!-- Ganti Audio di sini -->
-  <audio src="/febry/hbdfb.mp3" id="linkmp3" class="sembunyi"></audio>
+  <audio src="./hbdsong.mp3" id="linkmp3" class="sembunyi"></audio>
 
   <div id="bodyblur">
-    <!-- Wallpaper --><img src="/febry/gbr/febry.jpg" id="wallpaper" />
+    <!-- Wallpaper --> <img src="./gbr/adel.jpg" id="wallpaper" width="1000" height="300" />
     <div id="beneranblur"></div>
   </div>
 
   <div id='Content'>
 
     <div id="kadoIn">
-      <!-- Tombol Surat --><img src="/febry/gbr/kado.png" />
+      <!-- Tombol Surat --><img src="./gbr/kado.png" />
     </div>
     <p id="ket">Klik Kadonya!</p>
 
     <div class="kumpulanstiker">
       <!-- Stiker untuk Konten -->
-      <img src="/febry/gbr/bunga.gif" id="fotostiker" />
-      <img src="/febry/gbr/pusn.gif" id="fotostiker1" />
-      <img src="/febry/gbr/pandacoklat.gif" id="fotostiker2" />
-      <img src="/febry/gbr/cilukba.gif" id="fotostiker3" />
-      <img src="/febry/gbr/pandakuning.gif" id="fotostiker4" />
-      <img src="/febry/gbr/emawh.gif" id="fotostiker5" />
+      <img src="./gbr/bunga.gif" id="fotostiker" />
+      <img src="./gbr/pusn.gif" id="fotostiker1" />
+      <img src="./gbr/pandacoklat.gif" id="fotostiker2" />
+      <img src="./gbr/cilukba.gif" id="fotostiker3" />
+      <img src="./gbr/pandakuning.gif" id="fotostiker4" />
+      <img src="./gbr/emawh.gif" id="fotostiker5" />
 
-      <img src="/febry/gbr/pandacoklat.gif" id="fotostiker6" />
+      <img src="./gbr/pandacoklat.gif" id="fotostiker6" />
     </div>
 
     <p id="halo" class="halo"></p>
 
     <div>
-      <blockquote id='bq' data-text='𝘍𝘳𝘰𝘮 𝘏𝘪𝘮𝘢𝘯𝘨'>
+      <blockquote id='bq' data-text='𝘍𝘳𝘰𝘮 Ayang Ubi'>
         <p id="kalimat">Aku Ada Sesuatu Nih 🤣🎉</p>
 
         <p id="pesan1">Klik 4 Kue di Bawah! 😆🎉</p>
@@ -77,13 +260,13 @@
         <p id="pesan3">Ciee.. Ada yang Ultah Nih 🤣🎉</p>
         <p id="pesan4">Happy Birthday, </p>
         <p id="pesan5" class="gaya2">Nambah tua aja ya, hehe</p>
-        <p id="pesan6" class="gaya2">Semoga panjang umur biar tiap tahun bisa traktirin aku wkwk 😆🎉</p>
+        <p id="pesan6" class="gaya2">Semoga panjang umur dimurahkan rezekinya sayang aku terus dan 😆🎉</p>
         <p id="pesan7" class="gaya2">Sehat selalu ya!</p>
 
-        <p id="pesan8" class="gaya2">Canda wkwwk :v</p>
+        <p id="pesan8" class="gaya2">Bercanda Ayang Ubi</p>
         <p id="pesan9" class="gaya2">Oh iya, semoga di hari spesialmu ini kamu dapat menjadi pribadi yang lebih baik
-          yaa.. <br>Dilancarkan segala urusannya Diberikan kesehatan jasmani dan rohani🥳🎉</p>
-        <p id="pesan10" class="gaya2">Happy Level Up Day!! 🥳</p>
+          yaa.. <br>Kamu adalah orang yang sangat istimewa bagiku. Semoga kamu selalu dilimpahi oleh kebahagiaan yang tak ada putusnya. Selamat bertambah usia sayang🥳🎉</p>
+        <p id="pesan10" class="gaya2">Happy Level Up Day!! 🥳 <br> LOVE U</p>
 
         <!-- Tombol Lanjut -->
         <p id="opsL">Klik untuk Lanjut</p>
@@ -98,7 +281,7 @@
 
     <!-- Pesan Ditolak -->
     <div id="pesanditolak">
-      <img id="stikerditolak" src="/febry/gbr/weee.gif" />
+      <img id="stikerditolak" src="./gbr/weee.gif" />
       <p id="kataditolak">Yaudah kalo gamau mh 😜</p>
     </div>
 
@@ -157,13 +340,14 @@
       } = await swals.fire({
         title: 'Masukin Nama Kamu',
         input: 'text',
+        inputPlaceholder: "Ayang Ubi isinya yaa",
       });
       if (nama && nama.length < 11) {
         window.nama = nama;
         vketikhalo = "Hai, " + nama + " ✨";
         mulainama();
       } else {
-        await swals.fire('Ups!', 'Nama tidak boleh kosong atau lebih dari 10 karakter, ya!');
+        await swals.fire('Ups!', 'Nama tidak boleh kosong ayang ubi atau lebih dari 10 karakter, ya!');
         inipesan();
       }
     }
@@ -177,10 +361,10 @@
     async function menuju() {
       pesanwhatsapp = "Makasii udah ngucapin " + nama + " ultah ><";
       await swals.fire('OK!', 'Kirim jawabannya ke WhatsApp aku, ya!', 'success');
-      window.location = "https://api.whatsapp.com/send?phone=&text=" + pesanwhatsapp;
+      window.location = "https://api.whatsapp.com/send?phone=628985897901&text=" + pesanwhatsapp;
     }
   </script>
-  <script src="/febry/script.js"></script>
+  <script src="./script.js"></script>
   <!-- Sampai Sini -->
 </body>
 
